@@ -1,2 +1,2 @@
 # lsa-admin
-Long Services Award Admin UI
+Long Services Awards Admin UI
