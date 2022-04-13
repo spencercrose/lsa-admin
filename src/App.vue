@@ -8,9 +8,9 @@
       <b-alert class="m-5" show variant="info" v-if="isLoading">
         <b-spinner class="mr-3" small />Loading...
       </b-alert>
-      <div v-if="isAuthenticated" class="container mt-3">
+      <b-container fluid v-if="isAuthenticated" class="mt-3">
         <router-view :key="$route.fullPath" />
-      </div>
+      </b-container>
       <Login v-else />
     </main>
     <footer>

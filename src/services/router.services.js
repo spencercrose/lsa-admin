@@ -5,8 +5,8 @@
  * MIT Licensed
  */
 
-import store from '@/services/store.services'
-export {setTitle, authenticate, authorizeAdmin, authorizeSuperAdmin};
+import { getProfile } from "@/services/auth.services";
+export {setTitle, authorizeOrgContact, authorizeAdmin, authorizeSuperAdmin};
 
 
 /**
@@ -58,37 +58,28 @@ const setTitle = (to, from, next) => {
 }
 
 /**
- * Authenticate user based on existing credentials.
+ * Authorize user based on role.
  *
- * @param to
- * @param from
- * @param next
  * @src public
  */
 
-const authenticate = (to, from, next) => {
-  const isAuthenticated = store.getters.isAuthenticated;
-  if (!isAuthenticated) next({ name: 'unauthorized' })
-  else next()
+const authorizeOrgContact = async (to, from, next) => {
+  const [error, user] = await getProfile()
+  return error || !['orgContact', 'admin', 'super-admin'].includes(user.role)
+    ? next({name: 'unauthorized'})
+    : next()
 }
 
-/**
- * Authorize user based on existing credentials.
- *
- * @param to
- * @param from
- * @param next
- * @src public
- */
-
-const authorizeAdmin = (to, from, next) => {
-  const isAdmin = store.getters.isAdmin;
-  if (!isAdmin) next({ name: 'unauthorized' })
-  else next()
+const authorizeAdmin = async (to, from, next) => {
+  const [error, user] = await getProfile()
+  return error || !['admin', 'super-admin'].includes(user.role)
+    ? next({name: 'unauthorized'})
+    : next()
 }
 
-const authorizeSuperAdmin = (to, from, next) => {
-  const isSuperAdmin = store.getters.isSuperAdmin;
-  if (!isSuperAdmin) next({ name: 'unauthorized' })
-  else next()
+const authorizeSuperAdmin = async (to, from, next) => {
+  const [error, user] = await getProfile()
+  return error || !['admin', 'super-admin'].includes(user.role)
+    ? next({name: 'unauthorized'})
+    : next()
 }

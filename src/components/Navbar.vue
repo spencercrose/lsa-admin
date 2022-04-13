@@ -106,7 +106,8 @@ export default {
   },
   methods: {
     async reroute(uri) {
-      await this.$router.push(uri)
+      // check if already at url to avoid redundant navigation
+      if (uri !== this.$route.path) await this.$router.push(uri)
     },
     async logout() {
       this.$store.commit('setMessage', {text: "Signing out...", type: "info"})
@@ -129,8 +130,6 @@ export default {
     if (!error && user) {
       // store user data
       this.$store.commit('setUser', user)
-      // load options
-
       this.$store.commit('setLoading', false)
     }
     else {

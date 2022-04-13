@@ -7,10 +7,21 @@
 
 const reportsList = [
     {
+      id: 'lsa-recipients-export',
+      ref: 'lsa-export-1',
+      category: 'recipients',
+      slug: 'summary',
+      format: 'csv',
+      label: 'Recipients: Data Export',
+      description: 'Export of recipient registration data',
+      authorize: 'admin',
+    },
+    {
       id: 'lsa-awards-summary',
       ref: 'lsa-report-1',
       category: 'awards',
       slug: 'summary',
+      format: 'pdf',
       label: 'Awards: List and Totals',
       description: 'List of available awards and their order totals',
       authorize: 'admin',
@@ -40,7 +51,8 @@ const reportsList = [
 
 const reportCategories = [
   'awards',
-  'ceremony'
+  'recipients',
+  'ceremonies'
 ];
 
 export default {

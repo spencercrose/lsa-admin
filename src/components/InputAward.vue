@@ -28,6 +28,16 @@
         <b-form-invalid-feedback :state="recipient.award.id !== ''">
           This field is required.
         </b-form-invalid-feedback>
+
+        <b-button
+          class="m-2"
+          size="sm"
+          variant="info"
+          :disabled="!recipient.award.id"
+          @click="resetAwards">
+          Clear Award Selection
+        </b-button>
+
       </b-form-group>
       <p>{{description}}</p>
     </b-card>
@@ -57,6 +67,17 @@ export default {
       this.$store.commit('setFormData', {
         award: {
           id: this.recipient.award.id,
+          options: null,
+          status: 'delegated'
+        }
+      })
+      this.updateValidation()
+    },
+    resetAwards: function() {
+      // reset options available for the selected award
+      this.$store.commit('setFormData', {
+        award: {
+          id: null,
           options: null,
           status: 'delegated'
         }

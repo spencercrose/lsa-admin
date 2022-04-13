@@ -59,7 +59,7 @@ export default {
       const { id='' } = result || {}
       if (error || !id) this.$store.commit('setMessage', {
         text: 'An error occurred. Your deletion could not be completed',
-        type: 'error'
+        type: 'danger'
       })
       else {
         // successful deletion

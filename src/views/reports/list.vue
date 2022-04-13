@@ -25,16 +25,6 @@
         <b-col>
           <b-button size="sm" @click="clearFilters">Clear Filters</b-button>
         </b-col>
-        <b-col cols="4">
-          <b-button
-            v-if="isAdmin"
-            size="sm"
-            variant="dark"
-            :disabled="downloading"
-            @click="downloadFile('recipients', 'summary', 'csv')">
-            Export CSV (Recipients)
-          </b-button>
-        </b-col>
       </b-row>
     </b-container>
 
@@ -52,6 +42,7 @@
 
       <template #cell(details)="row">
         <b-button
+          v-if="row.item.format !== 'csv'"
           size="sm"
           class="m-1"
           @click="reroute(`/reports/view/${row.item.id}`)"
@@ -62,9 +53,9 @@
           size="sm"
           class="m-1"
           :disabled="downloading"
-          @click="downloadFile(row.item.category, row.item.slug, 'pdf')"
+          @click="downloadFile(row.item.category, row.item.slug, row.item.format)"
         >
-          Download PDF
+          Download {{row.item.format.toUpperCase()}}
         </b-button>
       </template>
 

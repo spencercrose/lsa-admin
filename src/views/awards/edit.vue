@@ -21,6 +21,7 @@
               id="input-award-name"
               v-model="award.name"
               placeholder="Full name of award"
+              :state="validate('name')"
             />
             <b-form-invalid-feedback :state="validate('name')">
               This field is required.
@@ -29,13 +30,14 @@
 
           <b-form-group
             id="fieldset-award-shortname"
-            label="Award Short Name"
+            label="Short Name"
             label-for="input-award-name"
           >
             <b-form-input
               id="input-award-shortname"
               v-model="award.short_name"
               placeholder="Code or shortened name of award"
+              :state="validate('short_name')"
             />
             <b-form-invalid-feedback :state="validate('short_name')">
               This field is required.
@@ -44,9 +46,8 @@
 
           <b-form-group
             id="input-award-milestone"
-            label="Select Award Milestone"
+            label="Select Milestone"
             label-for="input-award-milestone"
-            label-class="font-weight-bold"
             class="mb-4"
           >
             <b-form-select
@@ -63,9 +64,8 @@
 
           <b-form-group
             id="input-award-image-url"
-            label="Select Award Image Link"
+            label="Enter Image URL"
             label-for="input-award-milestone"
-            label-class="font-weight-bold"
             class="mb-4"
           >
             <b-form-input
@@ -78,15 +78,63 @@
 
           <b-form-group
             id="fieldset-award-description"
-            label="Award Description"
+            label="Description"
             label-for="input-award-description"
-            label-class="font-weight-bold"
+            description="Use '\n' for line breaks."
           >
             <b-form-textarea
               id="input-award-description"
               v-model="award.description"
             />
           </b-form-group>
+
+          <b-form-group
+            id="fieldset-award-options"
+            label="Options"
+            label-for="input-award-options"
+            label-class="font-weight-bold"
+          >
+              <b-form-checkbox-group
+                id="input-award-options"
+                v-model="selectedOptions"
+                name="award-options"
+                stacked
+              >
+                <b-form-checkbox
+                  v-for="(optType, index) in optionTypes"
+                  v-bind:key="optType.value"
+                  :value="optType.value"
+                  :id='`input-group-award-options-${index}`'
+                >
+                  <b-badge class="mr-2">{{optType.type}}</b-badge>
+                  <span class="font-weight-bold">{{optType.text}}</span>
+                  <b-form-group
+                    v-if="selectedOptions.includes(optType.value) && optType.type==='select'"
+                    :id='`input-group-award-options-values-${index}`'
+                    label="Options:"
+                    :label-for='`input-award-options-value-${index}`'
+                    label-cols="3"
+                  >
+                    <b-input-group
+                      prepend="Enter Value/Label"
+                      v-for="(optSelection, selectionIndex) in options[optType.value]"
+                      v-bind:key="optSelection.value"
+                      class="mb-2"
+                    >
+                      <b-form-input
+                        :id='`input-award-options-value-${selectionIndex}`'
+                        v-model="optSelection.value"
+                      />
+                      <b-form-input
+                        :id='`input-award-options-text-${selectionIndex}`'
+                        v-model="optSelection.text"
+                      />
+                    </b-input-group>
+                  </b-form-group>
+                </b-form-checkbox>
+
+              </b-form-checkbox-group>
+            </b-form-group>
 
           <b-button
             class="mt-2"
@@ -101,7 +149,7 @@
             class="mt-2 ml-2"
             variant="secondary"
             :disabled="processing"
-            @click="reroute('/ceremonies')">
+            @click="reroute('/awards')">
             Return to Awards
           </b-button>
 
@@ -113,7 +161,7 @@
 
 <script>
 import PageHeader from '@/components/PageHeader'
-import { get, put, post } from "@/services/api.services";
+import { get } from "@/services/api.services";
 import optionServices from '@/services/options.services'
 
 export default {
@@ -128,6 +176,9 @@ export default {
     return {
       processing: false,
       award: '',
+      options: [],
+      selectedOptions: [],
+      optionTypes: optionServices.get('award-option-types'),
       milestones: optionServices.get('milestones')
     }
   },
@@ -165,46 +216,45 @@ export default {
     }
   },
   methods: {
-    async reroute(uri) {
-      await this.$router.push(uri)
-    },
     async submit() {
       this.processing = true
 
-      // combine date and time
-      const datetime = `${this.date} ${this.time}`
-      console.log(this.date, datetime)
+      // encode award options
+      this.award.options = JSON.stringify(this.options)
 
-      const [error,] = this.isCreate
-        ? await post(`awards/create`, {
-          scheduled_datetime: datetime
-        })
-        : await put(`awards/update/${this.$route.params.id}`, {
-          id: this.id,
-          scheduled_datetime: datetime
-        })
+      console.log(this.award)
 
-      if (error) {
-        this.$store.commit('setMessage', {
-            text: 'Award could not be saved. An error occurred.',
-            type: 'danger'
-          }
-        )
-      }
-      else {
-        // successful update
-        this.$store.commit('setMessage', {
-          text: this.isCreate
-            ? 'Award successfully created'
-            : 'Award successfully updated',
-          type: 'success'
-        })
-        // redirect to manage users
-        this.isCreate ? await this.$router.push(`/awards/`) : ()=>{}
-      }
+      // const [error,] = this.isCreate
+      //   ? await post(`awards/create`, this.award)
+      //   : await put(`awards/update/${this.$route.params.id}`, this.award)
+      //
+      // if (error) {
+      //   this.$store.commit('setMessage', {
+      //       text: 'Award could not be saved. An error occurred.',
+      //       type: 'danger'
+      //     }
+      //   )
+      // }
+      // else {
+      //   // successful update
+      //   this.$store.commit('setMessage', {
+      //     text: this.isCreate
+      //       ? 'Award successfully created'
+      //       : 'Award successfully updated',
+      //     type: 'success'
+      //   })
+      //   // redirect to manage users
+      //   this.isCreate ? await this.$router.push(`/awards/`) : ()=>{}
+      // }
 
       this.processing = false
-    }
+    },
+    async reroute(uri) {
+      await this.$router.push(uri)
+    },
+    lookup(key, value) {
+      return optionServices.lookup(key, value)
+    },
   },
   async created() {
     this.$store.commit('setLoading', true)
@@ -212,21 +262,22 @@ export default {
     // initialize data
     const [error, data] = this.isCreate
       ? [null, {}]
-      : await get(`awards/show/${this.$route.params.id}` || '')
+      : await get(`awards/show/${this.$route.params.id}`)
 
     if (error) this.$store.commit('setMessage', error)
 
     this.award = {
       id: data.id || '',
       name: data.name || '',
-      shortName: data.short_name || '',
+      short_name: data.short_name || '',
       milestone: data.milestone || '',
       description: data.description || '',
-      imageUrl: data.image_url || '',
-      options: JSON.parse(data.options || '{}') || null,
+      image_url: data.image_url || '',
     }
 
-    console.log('!!!', this.award)
+    // get selected award options
+    this.selectedOptions = Object.keys(JSON.parse(data.options || '{}'))
+    this.options = JSON.parse(data.options || '{}')
 
     this.$store.commit('setLoading', false)
   }

@@ -39,7 +39,7 @@
 
 import PageHeader from '@/components/PageHeader'
 import reportServices from "@/services/reports.services"
-import {getReport, download} from "@/services/api.services"
+import {get, download} from "@/services/api.services"
 
 export default {
   name: 'reports-list',
@@ -78,24 +78,6 @@ export default {
     }
   },
   methods: {
-    async loadReport (report) {
-      this.error = false
-      const {slug='', category='', label='', description='', schema={}} = report || {}
-
-      // relabel page header
-      this.label = `Report - ${label}`
-      this.description = description
-
-      const [error, reportData] = await getReport(`reports/${category}/${slug}/data`)
-      if (error) {
-        this.error = true
-        this.$store.commit('setMessage', error)
-      }
-
-      // filter items for viewing
-      this.items = (reportData || [])
-      this.fields = schema.fields
-    },
     async reroute(uri) {
       await this.$router.push(uri)
     },
@@ -115,8 +97,30 @@ export default {
   },
   async beforeMount () {
     this.$store.commit('setLoading', true)
+    this.error = false
+
+    // retrieve report schema
     this.report = reportServices.get(this.$route.params.id || '')
-    await this.loadReport(this.report)
+    const {slug='', category='', label='', description='', schema={}} = this.report || {}
+
+    // relabel page header
+    this.label = `Report - ${label}`
+    this.description = description
+
+    // get report data
+    const [error, reportData] = await get(`reports/${category}/${slug}/data`)
+
+    if (error) {
+      this.error = true
+      this.$store.commit('setMessage', error)
+      this.$store.commit('setLoading', false)
+      return
+    }
+
+    // filter items for viewing
+    this.items = (reportData || [])
+    this.fields = schema.fields
+
     this.$store.commit('setLoading', false)
   }
 }

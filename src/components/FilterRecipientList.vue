@@ -1,7 +1,11 @@
 <template>
   <div>
-    <b-container v-if="!isLoading" class="mb-2 mt-2 p-2 rounded bg-secondary text-white">
+    <b-container fluid v-if="!isLoading" class="mb-2 mt-2 p-2 rounded bg-secondary text-white">
       <b-row>
+        <b-col class="pl-3">
+          <p><span class="font-weight-bold">Listed Recipients:</span>
+            {{pagination.total}}</p>
+        </b-col>
         <b-col class="mb-2" align="right">
           <b-spinner v-if="processing" class="mr-3" small />
           <b-button
@@ -78,6 +82,19 @@
             ></b-form-select>
           </b-form-group>
         </b-col>
+        <b-col>
+          <b-form-group
+            label="Results Per Page"
+            label-for="table-select-filter-results-per-page"
+          >
+            <b-form-select
+              id="table-select-filter-results-per-page"
+              v-model="selectResultsPerPage"
+              :options="resultsPerPage"
+              class="mb-3"
+            ></b-form-select>
+          </b-form-group>
+        </b-col>
       </b-row>
       <b-row>
         <b-col>
@@ -91,6 +108,18 @@
               placeholder="Search Recipient's First or Last Name"
             />
             <p class="small">Enter the first <span class="font-weight-bold">OR</span> last name.</p>
+          </b-form-group>
+        </b-col>
+        <b-col>
+          <b-form-group
+            label="Employee Number"
+            label-for="table-input-filter-employee-number"
+          >
+            <b-form-input
+              id="table-input-filter-employee-number"
+              v-model="selectEmployeeNumber"
+              placeholder="Search recipient's employee number"
+            />
           </b-form-group>
         </b-col>
         <b-col>
@@ -129,16 +158,23 @@
             ></b-form-select>
           </b-form-group>
         </b-col>
+        <b-col>
+          <b-form-group
+            label="Ceremony Opt Out"
+            label-for="table-select-filter-ceremony-opt-out"
+          >
+            <b-form-select
+              id="table-select-filter-ceremony-opt-out"
+              v-model="selectCeremonyOptOut"
+              :options="ceremonyOptOut"
+              class="mb-3"
+            ></b-form-select>
+          </b-form-group>
+        </b-col>
       </b-row>
     </b-container>
 
     <b-container v-if="!isLoading">
-      <b-row>
-        <b-col>
-          <p><span class="font-weight-bold">Listed Recipients:</span>
-            {{pagination.total}}</p>
-        </b-col>
-      </b-row>
       <b-row>
         <b-col align-self="center" class="overflow-auto text-center">
           <div>
@@ -203,14 +239,19 @@ export default {
       selectStatus: '',
       selectMilestone: '',
       selectIsRetiring: '',
+      selectCeremonyOptOut: '',
       selectOrganization: '',
+      selectResultsPerPage: '',
       selectName: '',
+      selectEmployeeNumber: '',
       selectSortBy: '',
       selectSortOrder: '',
       historical: optionServices.get('isHistorical'),
       statuses: optionServices.get('status'),
       isRetiring: optionServices.get('isRetiring'),
       milestones: optionServices.get('milestones'),
+      ceremonyOptOut: optionServices.get('ceremony-opt-out'),
+      resultsPerPage: optionServices.get('results-per-page'),
       sortBy: optionServices.get('sort-by'),
       sortOrder: optionServices.get('sort-order'),
     }
@@ -227,9 +268,12 @@ export default {
       this.selectHistorical = ''
       this.selectStatus = ''
       this.selectName = ''
+      this.selectEmployeeNumber = ''
       this.selectIsRetiring = ''
+      this.selectCeremonyOptOut = ''
       this.selectMilestone = ''
       this.selectOrganization = ''
+      this.selectResultsPerPage = ''
       this.selectSortBy = ''
       this.selectSortOrder = ''
       this.loader()
@@ -243,12 +287,18 @@ export default {
         key: 'status', value: !!this.selectStatus})
       if (this.selectName !== '') filters.push({
         key: 'name', value: this.selectName})
+      if (this.selectEmployeeNumber !== '') filters.push({
+        key: 'employee_number', value: this.selectEmployeeNumber})
       if (this.selectIsRetiring !== '') filters.push({
         key: 'retirement', value: !!this.selectIsRetiring})
+      if (this.selectCeremonyOptOut !== '') filters.push({
+        key: 'ceremony_opt_out', value: !!this.selectCeremonyOptOut})
       if (this.selectMilestone !== '') filters.push({
         key: 'milestone', value: this.selectMilestone})
       if (this.selectOrganization !== '') filters.push({
         key: 'organization', value: this.selectOrganization})
+      if (this.selectResultsPerPage !== '') filters.push({
+        key: 'results_per_page', value: this.selectResultsPerPage})
       if (this.selectSortBy !== '') filters.push({
         key: 'sort',
         value: `${this.selectSortBy}${
@@ -264,11 +314,14 @@ export default {
   computed: {
     hasFilters() {
       return this.selectName !== ''
+        || this.selectEmployeeNumber !== ''
         || this.selectHistorical !== ''
         || this.selectStatus !== ''
         || this.selectIsRetiring !== ''
         || this.selectMilestone !== ''
+        || this.selectCeremonyOptOut !== ''
         || this.selectOrganization !== ''
+        || this.selectResultsPerPage !== ''
         || this.selectSortBy !== ''
         || this.selectSortOrder !== ''
     },

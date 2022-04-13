@@ -22,8 +22,7 @@ import ReportsView from "./views/reports/view"
 import AwardsEdit from "./views/awards/edit"
 import CeremoniesEdit from "./views/ceremonies/edit"
 
-import {authorizeAdmin} from './services/router.services'
-
+import {authorizeAdmin, authorizeOrgContact} from './services/router.services'
 
 /**
  * Set page title/metadata by route
@@ -53,17 +52,17 @@ function getMeta(title) {
 
 const routes = [
   {
-    path: "/",
-    name: "dashboard",
-    component: Dashboard,
-    meta: getMeta('Admin Dashboard'),
-    beforeEnter: authorizeAdmin
-  },
-  {
     path: "/login",
     name: "users-login",
     component: UsersLogin,
     meta: getMeta('Sign In')
+  },
+  {
+    path: "/",
+    name: "dashboard",
+    component: Dashboard,
+    meta: getMeta('Admin Dashboard'),
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/users/register",
@@ -123,7 +122,7 @@ const routes = [
       lead: 'Manage LSA recipient records',
       mode: 'list'
     },
-    beforeEnter: authorizeAdmin
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/recipients/view/:id",
@@ -135,7 +134,7 @@ const routes = [
       lead: 'View LSA recipient record',
       mode: 'view'
     },
-    beforeEnter: authorizeAdmin
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/recipients/create",
@@ -147,7 +146,7 @@ const routes = [
       lead: 'Add new LSA recipient record',
       mode: 'create'
     },
-    beforeEnter: authorizeAdmin
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/recipients/edit/:id",
@@ -159,7 +158,7 @@ const routes = [
       lead: 'Edit LSA recipient record',
       mode: 'edit'
     },
-    beforeEnter: authorizeAdmin
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/recipients/delete/:id",
@@ -171,7 +170,7 @@ const routes = [
       lead: 'Delete LSA recipient record',
       mode: 'delete'
     },
-    beforeEnter: authorizeAdmin
+    beforeEnter: authorizeOrgContact
   },
   {
     path: "/reports",
@@ -219,7 +218,7 @@ const routes = [
     props: {
       header: 'Update Award',
       lead: 'Update LSA award details',
-      mode: 'create'
+      mode: 'edit'
     },
     beforeEnter: authorizeAdmin
   },

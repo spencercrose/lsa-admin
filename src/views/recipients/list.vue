@@ -5,10 +5,11 @@
     <ModalAction
       :title="lookup('recipientActions', selectAction)"
       :action="selectAction"
-      :process = selectedActionProcess
+      :process="selectedActionProcess"
+      :options="ceremonies"
     />
 
-    <b-container v-if="!isLoading" class="p-2 rounded bg-secondary text-white">
+    <b-container fluid v-if="!isLoading && isSuperAdmin" class="p-2 rounded bg-secondary text-white">
       <b-row>
         <b-col cols="4">
             <b-form-select
@@ -29,7 +30,7 @@
             Apply Action
           </b-button>
         </b-col>
-        <b-col cols="6" class="mb-2" align="right">
+        <b-col cols="6" align="right">
           <span v-if="selected.length > 0"> {{ selected.length }} Item(s) Selected</span>
           <b-spinner v-if="processingAction" class="mr-3" small />
           <b-button
@@ -63,7 +64,7 @@
       striped
       :select-mode="selectMode"
       responsive="sm"
-      selectable
+      :selectable="isSuperAdmin"
       @row-selected="onRowSelected"
       :busy.sync="loading"
     >
@@ -80,10 +81,10 @@
       </template>
 
       <template #cell(is_declared)="row">
-        <b-badge :variant="!!row.item.is_declared ? 'success' : 'warning'">
+        <b-badge class="m-1" :variant="!!row.item.is_declared ? 'success' : 'warning'">
           {{ !!row.item.is_declared ? 'Submitted' : 'Draft' }}
         </b-badge>
-        <b-badge v-if="!!row.item.historical" variant="info">Historical</b-badge>
+        <b-badge class="p-1" v-if="!!row.item.historical" variant="info">Historical</b-badge>
       </template>
 
       <template #cell(organization)="row">
@@ -92,6 +93,10 @@
 
       <template #cell(retiring_this_year)="row">
         {{ row.item.retiring_this_year ? 'Yes' : 'No' }}
+      </template>
+
+      <template #cell(ceremony_opt_out)="row">
+        {{ row.item.ceremony_opt_out ? 'Yes' : 'No' }}
       </template>
 
       <template #cell(created)="row">
@@ -103,27 +108,29 @@
       </template>
 
       <template #cell(details)="row">
-        <b-button
-          size="sm"
-          class="m-1"
-          @click="reroute(`/recipients/view/${row.item.id}`)"
-        >
-          View
-        </b-button>
-        <b-button
-          size="sm"
-          class="m-1"
-          @click="reroute(`/recipients/edit/${row.item.id}`)"
-        >
-          Edit
-        </b-button>
-        <b-button
-          size="sm"
-          class="m-1"
-          @click="reroute(`/recipients/delete/${row.item.id}`)"
-        >
-          Delete
-        </b-button>
+        <b-button-group>
+          <b-button
+            size="sm"
+            class="m-1"
+            @click="reroute(`/recipients/view/${row.item.id}`)"
+          >
+            View
+          </b-button>
+          <b-button
+            size="sm"
+            class="m-1"
+            @click="reroute(`/recipients/edit/${row.item.id}`)"
+          >
+            Edit
+          </b-button>
+          <b-button
+            size="sm"
+            class="m-1"
+            @click="reroute(`/recipients/delete/${row.item.id}`)"
+          >
+            Delete
+          </b-button>
+        </b-button-group>
       </template>
 
     </b-table>
@@ -184,10 +191,12 @@ export default {
         {key: 'is_declared', label: 'Status'},
         {key: 'first_name'},
         {key: 'last_name'},
+        {key: 'employee_number', label: 'Employee No.'},
         {key: 'organization'},
         {key: 'branch_name', label: 'Branch'},
         {key: 'milestone'},
         {key: 'retiring_this_year', label: 'Retiring'},
+        {key: 'ceremony_opt_out', label: 'Opt Out'},
         {key: 'updated'},
         {key: 'created'},
         {key: 'details', label: ''}
@@ -209,6 +218,9 @@ export default {
     },
     user() {
       return this.$store.getters.getUser
+    },
+    ceremonies() {
+      return this.$store.getters.getCeremonies
     },
     organizations() {
       // filter organizations by recipient authorization
@@ -238,29 +250,31 @@ export default {
     },
     applyAction() {
       const process = async (url, data)=> {
-        const [error, result] = await put(url, data)
-        const { id='' } = result || {}
-        if (error || !id) this.$store.commit('setMessage', {
+        this.processingAction = true
+        const [error,] = await put(url, data)
+        if (error) this.$store.commit('setMessage', {
           text: 'An error occurred. Your action could not be completed',
           type: 'danger'
         })
         else {
-          // successful deletion
+          // successful action
           this.$store.commit('setMessage', {
-            text: `${this.title} successfully completed`, type: 'success'
+            text: `Recipient(s) successfully ${data.status.toUpperCase()}`, type: 'success'
           })
           // reload data and close modal
           await this.loadRecipients()
         }
+        this.processingAction = false
       }
 
+      // Status Options : 'assigned','invited','attending','declined','waitlisted'
       const actions = {
         assign: (ceremony) => {
           console.log('Assign ceremony:', this.selected, ceremony)
           this.selected.forEach(recipient => {
             const {id = ''} = recipient || {}
             process(`/recipients/assign/${id}'`, {
-              status: 'assign',
+              status: 'assigned',
               ceremony: ceremony
             })
           })
@@ -270,7 +284,7 @@ export default {
           this.selected.forEach(recipient => {
             const {id = ''} = recipient || {}
             process(`/recipients/assign/${id}'`, {
-              status: 'waitlist',
+              status: 'waitlisted',
               ceremony: ceremony
             })
           })
@@ -329,9 +343,11 @@ export default {
             id=null,
             first_name=false,
             last_name=null,
+            employee_number=null,
             milestones=null,
             historical=false,
             retiring_this_year=0,
+            ceremony_opt_out=0,
             organization_id='',
             branch_name='',
             is_declared=0,
@@ -345,11 +361,13 @@ export default {
             is_declared: is_declared,
             first_name: first_name,
             last_name: last_name,
+            employee_number: employee_number,
             organization: organization_id,
             historical: historical,
             milestone: milestones,
             branch_name: branch_name,
             retiring_this_year: retiring_this_year,
+            ceremony_opt_out: ceremony_opt_out,
             created: createdTS,
             updated: updatedTS,
           }
